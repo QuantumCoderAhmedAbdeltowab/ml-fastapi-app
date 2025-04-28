@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+scikit-learn==1.5.1
+numpy
+pandas
+beautifulsoup4
+requests
+python-dateutil
+googlesearch-python
+python-whois
+nltk
+# googletrans==4.0.0rc1
+deep-translator
+langdetect
+boto3
+python-dotenv
