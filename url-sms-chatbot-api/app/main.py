@@ -73,7 +73,12 @@ import re
 import pickle
 from feature import FeatureExtraction  # For URL feature extraction
 from preprocessing import preprocess_text  # For SMS preprocessing
+import nltk
 
+# this will create tokenizers/punkt_tab/<lang>/ if possible
+nltk.download('punkt_tab', quiet=True)  
+# still download the real punkt too
+nltk.download('punkt', quiet=True)
 app = FastAPI()
 
 # Load URL detection model
