@@ -2,29 +2,43 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import re
 import pickle
-from feature import FeatureExtraction  # For URL feature extraction
-from preprocessing import preprocess_text  # For SMS preprocessing
+import joblib
 import nltk
+from feature import FeatureExtraction
+from preprocessing import preprocess_text
+from models import ChatRequest, Message, Role
+from ollama_client import chat_with_ollama
+from translation_utils import detect_language, translate_text
+import shutil
 
-# this will create tokenizers/punkt_tab/<lang>/ if possible
-nltk.download('punkt_tab', quiet=True)  
-# still download the real punkt too
+# Ensure Ollama CLI is installed
+if not shutil.which("ollama"):
+    raise RuntimeError("Ollama CLI is not installed or not in PATH.")
+
+# Download necessary NLTK data
+nltk.download('punkt_tab', quiet=True) 
 nltk.download('punkt', quiet=True)
+
 app = FastAPI()
 
 # Load URL detection model
 try:
-    with open("model_url_v2.pkl", "rb") as f:
-        url_model = pickle.load(f)
+    url_model = joblib.load("model_url_v4.pkl")
+    if not hasattr(url_model, 'predict'):
+        raise ValueError(
+            "Loaded URL model is not valid. Ensure it is a scikit-learn model or similar object with a 'predict' method. "
+            "If the model file is invalid, retrain the model and save it using joblib or pickle."
+        )
 except Exception as e:
-    raise RuntimeError("Failed to load model_url_v2.pkl") from e
+    raise RuntimeError(f"Failed to load model_url_v4.pkl: {str(e)}") from e
 
-# Load SMS detection model (expects preprocessed text)
+# Load SMS detection model
 try:
-    with open("model_sms_v2.pkl", "rb") as f:
-        sms_model = pickle.load(f)
+    sms_model = joblib.load("model_sms_v2.pkl")
+    if not hasattr(sms_model, 'predict'):
+        raise ValueError("Loaded SMS model is not valid. Ensure it has a 'predict' method.")
 except Exception as e:
-    raise RuntimeError("Failed to load model_sms_v2.pkl") from e
+    raise RuntimeError(f"Failed to load model_sms_v2.pkl: {str(e)}") from e
 
 class URLRequest(BaseModel):
     url: str
@@ -35,14 +49,16 @@ class SMSRequest(BaseModel):
 @app.post("/predict_url")
 async def predict_url(request: URLRequest):
     try:
-        # Extract features and predict
-        features = FeatureExtraction(request.url).getFeaturesList()
-        raw_pred = url_model.predict([features])[0]
+        feature_extractor = FeatureExtraction(request.url)
+        features = feature_extractor.getFeaturesList()
+        
+        # Ensure features is a 2D array
+        features_2d = [features]
+        raw_pred = url_model.predict(features_2d)[0]
         prediction = int(raw_pred)
-
-        # Map -1 → 0, 1 → 1, others → 0
+        
         final_result = 1 if prediction == 1 else 0
-
+        
         return {
             "prediction": prediction,
             "final_result": final_result
@@ -54,27 +70,24 @@ async def predict_url(request: URLRequest):
 async def predict_sms(request: SMSRequest):
     try:
         sms_message = request.message
-        
-        # Preprocess the SMS message
         sms_message_clean = preprocess_text(sms_message)
-        
-        # Predict using the SMS model (0 = unsafe, 1 = safe)
-        sms_pred_int = int(sms_model.predict([sms_message_clean])[0])
-        
-        # Look for URLs in the SMS
+        sms_pred_int = int(sms_model.predict([sms_message_clean])[0])  # 0 = unsafe, 1 = safe
+
+        # Look for URLs
         url_regex = r'(https?://\S+|www\.\S+)'  
         urls = re.findall(url_regex, sms_message)
-        
-        # Default URL prediction to a non-1 value
-        url_pred_int = None
+
+        # Default “no URL” to safe
+        url_pred_int = 1
         if urls:
             url = urls[0]
-            features = FeatureExtraction(url).getFeaturesList()
-            url_pred_int = int(url_model.predict([features])[0])  # -1 = unsafe, 1 = safe
-        
-        # Compute final_result: 1 only if both models say "safe"
+            feature_extractor = FeatureExtraction(url)
+            features = feature_extractor.getFeaturesList()
+            url_pred_int = int(url_model.predict([features])[0])
+
+        # Final: safe only if both are safe
         final_result = 1 if (sms_pred_int == 1 and url_pred_int == 1) else 0
-        
+
         return {
             "sms_prediction": sms_pred_int,
             "url_prediction": url_pred_int,
@@ -84,45 +97,42 @@ async def predict_sms(request: SMSRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-    
 import asyncio
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from ollama_client import query_ollama
 from translation_utils import detect_language, translate_text
-class ChatRequest(BaseModel):
-    question: str
 
 @app.post("/chat")
 async def chat_endpoint(request: ChatRequest):
-    """
-    Endpoint for asking cybersecurity-related questions.
-    The API detects if the prompt is in Arabic, translates it to English before querying the model,
-    and then translates the response back to Arabic.
-    """
     try:
-        # Await the asynchronous language detection
-        input_language = await detect_language(request.question)
+        input_lang = await detect_language(request.question)
         
-        # Translate to English if the question is in Arabic
-        if input_language == 'ar':
-            translated_question = await translate_text(request.question, 'en')
+        # Ensure history exists, even if empty
+        history = request.history if hasattr(request, 'history') else []
+        
+        if input_lang == "ar":
+            new_q_en = await translate_text(request.question, "en")
         else:
-            translated_question = request.question
+            new_q_en = request.question
 
-        # Run the blocking Ollama call in a thread to avoid blocking the event loop
-        english_response = await asyncio.to_thread(query_ollama, translated_question)
+        english_response = await asyncio.to_thread(
+            chat_with_ollama,
+            history,  # Pass the possibly empty history
+            new_q_en
+        )
 
-        # Translate back to Arabic if necessary
-        if input_language == 'ar':
-            final_response = await translate_text(english_response, 'ar')
+        if input_lang == "ar":
+            final = await translate_text(english_response, "ar")
         else:
-            final_response = english_response
+            final = english_response
 
-        return {"response": final_response}
+        return {"response": final}
     except Exception as e:
+        if isinstance(e, AttributeError):
+            raise HTTPException(status_code=400, detail="Invalid request format")
         raise HTTPException(status_code=500, detail=str(e))
-    
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=80)
