@@ -46,7 +46,7 @@ class FeatureExtraction:
         c = self.domain.count('.')
         return 1 if c==1 else 0 if c==2 else -1
 
-    def Hppts(self):
+    def HTTPS(self):  # Renamed from Hppts to HTTPS
         try: return 1 if self.urlparse_obj.scheme=='https' else -1
         except: return -1
 
@@ -115,7 +115,7 @@ class FeatureExtraction:
 
     def getFeaturesList(self):
         return [
-            self.prefixSuffix(), self.SubDomains(), self.Hppts(),
+            self.prefixSuffix(), self.SubDomains(), self.HTTPS(),  # Updated method name
             self.DomainRegLen(), self.AnchorURL(), self.LinksInScriptTags(),
             self.ServerFormHandler(), self.WebsiteTraffic(),
             self.GoogleIndex(), self.LinksPointingToPage()
