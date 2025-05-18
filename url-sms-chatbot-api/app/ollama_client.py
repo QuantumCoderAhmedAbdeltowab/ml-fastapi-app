@@ -27,7 +27,7 @@ def query_ollama(prompt: str) -> str:
     """
     Actually call the Ollama CLI with the fully assembled prompt.
     """
-    command = ["ollama", "run", "llama3.2"]
+    command = ["ollama", "run", "llama3.2:1b"]
     process = subprocess.run(
         command,
         input=prompt,
