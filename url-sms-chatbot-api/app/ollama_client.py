@@ -4,9 +4,8 @@ from models import Message, Role
 
 # 1) system prompt lives here
 SYSTEM_PROMPT = (
-    "You are a cybersecurity assistant. You answer questions related to cybersecurity, "
-    "online safety, and best practices for digital security. If a question is not related "
-    "to these domains, politely let the user know that you cannot provide assistance on that topic. "
+    "You are a cybersecurity assistant. You answer questions related to cybersecurity,"
+    "online safety, and best practices for digital security."
     "Try to answer as briefly as possible."
 )
 
@@ -28,7 +27,7 @@ def query_ollama(prompt: str) -> str:
     """
     Actually call the Ollama CLI with the fully assembled prompt.
     """
-    command = ["ollama", "run", "llama3.2:1b"]
+    command = ["ollama", "run", "llama3.2"]
     process = subprocess.run(
         command,
         input=prompt,
