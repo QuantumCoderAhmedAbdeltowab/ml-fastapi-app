@@ -34,7 +34,7 @@ except Exception as e:
 
 # Load SMS detection model
 try:
-    sms_model = joblib.load("model_sms_v2.pkl")
+    sms_model = joblib.load("sms_svm_model_v2.pkl")
     if not hasattr(sms_model, 'predict'):
         raise ValueError("Loaded SMS model is not valid. Ensure it has a 'predict' method.")
 except Exception as e:
