@@ -6,14 +6,14 @@ import joblib
 import nltk
 from feature import FeatureExtraction
 from preprocessing import preprocess_text
-from models import ChatRequest, Message, Role
-from ollama_client import chat_with_ollama
-from translation_utils import detect_language, translate_text
+# from models import ChatRequest, Message, Role
+# from ollama_client import chat_with_ollama
+# from translation_utils import detect_language, translate_text
 import shutil
 
 # Ensure Ollama CLI is installed
-if not shutil.which("ollama"):
-    raise RuntimeError("Ollama CLI is not installed or not in PATH.")
+# if not shutil.which("ollama"):
+#     raise RuntimeError("Ollama CLI is not installed or not in PATH.")
 
 # Download necessary NLTK data
 nltk.download('punkt_tab', quiet=True) 
@@ -100,38 +100,38 @@ async def predict_sms(request: SMSRequest):
 import asyncio
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from ollama_client import query_ollama
-from translation_utils import detect_language, translate_text
+# from ollama_client import query_ollama
+# from translation_utils import detect_language, translate_text
 
-@app.post("/chat")
-async def chat_endpoint(request: ChatRequest):
-    try:
-        input_lang = await detect_language(request.question)
+# @app.post("/chat")
+# async def chat_endpoint(request: ChatRequest):
+#     try:
+#         input_lang = await detect_language(request.question)
         
-        # Ensure history exists, even if empty
-        history = request.history if hasattr(request, 'history') else []
+#         # Ensure history exists, even if empty
+#         history = request.history if hasattr(request, 'history') else []
         
-        if input_lang == "ar":
-            new_q_en = await translate_text(request.question, "en")
-        else:
-            new_q_en = request.question
+#         if input_lang == "ar":
+#             new_q_en = await translate_text(request.question, "en")
+#         else:
+#             new_q_en = request.question
 
-        english_response = await asyncio.to_thread(
-            chat_with_ollama,
-            history,  # Pass the possibly empty history
-            new_q_en
-        )
+#         english_response = await asyncio.to_thread(
+#             chat_with_ollama,
+#             history,  # Pass the possibly empty history
+#             new_q_en
+#         )
 
-        if input_lang == "ar":
-            final = await translate_text(english_response, "ar")
-        else:
-            final = english_response
+    #     if input_lang == "ar":
+    #         final = await translate_text(english_response, "ar")
+    #     else:
+    #         final = english_response
 
-        return {"response": final}
-    except Exception as e:
-        if isinstance(e, AttributeError):
-            raise HTTPException(status_code=400, detail="Invalid request format")
-        raise HTTPException(status_code=500, detail=str(e))
+    #     return {"response": final}
+    # except Exception as e:
+    #     if isinstance(e, AttributeError):
+    #         raise HTTPException(status_code=400, detail="Invalid request format")
+    #     raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn
