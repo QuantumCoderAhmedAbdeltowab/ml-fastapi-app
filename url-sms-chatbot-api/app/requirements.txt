@@ -10,7 +10,7 @@
  fastapi
  uvicorn
  pydantic
- scikit-learn==1.5.1
+ scikit-learn
  numpy
  pandas
  beautifulsoup4
