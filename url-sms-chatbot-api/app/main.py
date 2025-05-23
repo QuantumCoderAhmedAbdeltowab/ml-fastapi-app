@@ -133,8 +133,11 @@ from pydantic import BaseModel
     #         raise HTTPException(status_code=400, detail="Invalid request format")
     #     raise HTTPException(status_code=500, detail=str(e))
 
+# if __name__ == "__main__":
+#     import uvicorn
+#     uvicorn.run("main:app", host="0.0.0.0", port=80)
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=80)
+    uvicorn.run("main:app", host="0.0.0.0", port=55555)
 
 
