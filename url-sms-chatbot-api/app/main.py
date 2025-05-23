@@ -97,7 +97,7 @@ async def predict_sms(request: SMSRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-import asyncio
+# import asyncio
 # from fastapi import FastAPI, HTTPException
 # from pydantic import BaseModel
 # from ollama_client import query_ollama
