@@ -7,20 +7,22 @@
 # langdetect
 # boto3
 # python-dotenv
-fastapi
-uvicorn
-pydantic
-scikit-learn==1.0.2  # Changed from 1.5.1 to be compatible with Python 3.8.1
-numpy
-pandas
-beautifulsoup4
-requestslsoup4
-python-dateutil
-googlesearch-python
-python-whois-python
-nltkon-whois
-joblib
-deep-translator
-langdetectlator
-boto3>=1.34.41,<1.34.70
-botocore>=1.34.41,<1.34.70# -boto3
+ fastapi
+ uvicorn
+ pydantic
+scikit-learn==1.0.2 
+ numpy
+ pandas
+ beautifulsoup4
+ requests
+ python-dateutil
+ googlesearch-python
+ python-whois
+ nltk
+ joblib
+ deep-translator
+ langdetect
+ boto3>=1.34.41,<1.34.70      # add this
+ botocore>=1.34.41,<1.34.70  # add this
+ boto3                            # remove un‑versioned boto3 if present
+# -boto3
