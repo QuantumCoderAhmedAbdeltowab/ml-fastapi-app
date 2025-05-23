@@ -98,8 +98,8 @@ async def predict_sms(request: SMSRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 import asyncio
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+# from fastapi import FastAPI, HTTPException
+# from pydantic import BaseModel
 # from ollama_client import query_ollama
 # from translation_utils import detect_language, translate_text
 
@@ -136,6 +136,7 @@ from pydantic import BaseModel
 # if __name__ == "__main__":
 #     import uvicorn
 #     uvicorn.run("main:app", host="0.0.0.0", port=80)
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=55555)
